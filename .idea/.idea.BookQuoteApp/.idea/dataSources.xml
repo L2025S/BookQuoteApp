@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
+    <data-source source="LOCAL" name="db_book_quote@ep-delicate-sea-aglgp03t-pooler.c-2.eu-central-1.aws.neon.tech" uuid="1deb60ad-feb3-4302-bead-50008d1cf22a">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://ep-delicate-sea-aglgp03t-pooler.c-2.eu-central-1.aws.neon.tech:5432/db_book_quote</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
+  </component>
+</project>
