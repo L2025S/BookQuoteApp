@@ -1,46 +1,41 @@
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using BookApi;
 using BookApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ========== 数据库配置 - 针对 Neon PostgreSQL ==========
-// 方式1：从环境变量读取连接字符串（匹配你的 ConnectionStrings_BookQuote）
-// .NET 会自动将环境变量 ConnectionStrings_BookQuote 映射到 Configuration["ConnectionStrings:BookQuote"]
+// ========== Database configuration - Neon PostgreSQL ==========
+// Read connection string from configuration (environment variable ConnectionStrings__BookQuote)
 var connectionString = builder.Configuration.GetConnectionString("BookQuote");
 
-// 备用方案：如果上面的方式读不到，直接从环境变量读取
+// Fallback: read directly from environment variable
 if (string.IsNullOrEmpty(connectionString))
 {
     connectionString = Environment.GetEnvironmentVariable("ConnectionStrings_BookQuote");
 }
 
-// 如果还是读不到，尝试其他常见的环境变量名
+// Additional fallback for common variable names
 if (string.IsNullOrEmpty(connectionString))
 {
     connectionString = Environment.GetEnvironmentVariable("DATABASE_URL")
         ?? Environment.GetEnvironmentVariable("NEON_DATABASE_URL");
 }
 
-// 检查是否成功读取到连接字符串
 if (string.IsNullOrEmpty(connectionString))
 {
-    Console.WriteLine("错误：无法读取数据库连接字符串！");
-    Console.WriteLine("请确保环境变量 ConnectionStrings_BookQuote 已设置。");
-    throw new InvalidOperationException("数据库连接字符串未配置");
+    Console.WriteLine("Error: Unable to read database connection string!");
+    throw new InvalidOperationException("Database connection string not configured");
 }
 
-Console.WriteLine($"数据库连接字符串已读取（长度：{connectionString.Length} 字符）");
+Console.WriteLine($"Database connection string read (length: {connectionString.Length} characters)");
 
-// 使用 PostgreSQL
+// Use PostgreSQL
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-// ========== JWT 认证配置（保持不变）==========
+// ========== JWT authentication configuration ==========
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -58,35 +53,43 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddControllers();
-builder.Services.AddCors();
+
+// ========== CORS configuration – allow only your Netlify frontend ==========
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowNetlify", policy =>
+    {
+        policy.WithOrigins("https://bookapp2026.netlify.app//") 
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 var app = builder.Build();
 
-// 配置跨域
-app.UseCors(builder => builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+// Apply the CORS policy
+app.UseCors("AllowNetlify");
 
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// ========== 自动创建/更新数据库 ==========
+// ========== Automatically apply database migrations ==========
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     try
     {
-        // 对于 Neon PostgreSQL，使用 Migrate
         db.Database.Migrate();
-        Console.WriteLine("数据库迁移成功！");
+        Console.WriteLine("Database migration successful!");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"数据库迁移失败: {ex.Message}");
+        Console.WriteLine($"Database migration failed: {ex.Message}");
         throw;
     }
 }
 
 app.Run();
-
-
