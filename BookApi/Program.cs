@@ -6,6 +6,13 @@ using BookApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//============Force Kestrel to listen on Render's PORT===============
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(int.Parse(port));
+});
+
 // ========== Database configuration - Neon PostgreSQL ==========
 // Read connection string from configuration (environment variable ConnectionStrings__BookQuote)
 var connectionString = builder.Configuration.GetConnectionString("BookQuote");
@@ -54,13 +61,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddControllers();
 
-// ========== CORS configuration – allow only your Netlify frontend ==========
+// ========== CORS configuration – allow only  Netlify frontend ==========
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowNetlify", policy =>
     {
-        policy.WithOrigins("https://bookapp2026.netlify.app//") 
+        policy.WithOrigins("https://bookapp2026.netlify.app") 
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
