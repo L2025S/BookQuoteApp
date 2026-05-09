@@ -67,7 +67,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowNetlify", policy =>
     {
-        policy.WithOrigins("https://bookapp2026.netlify.app") 
+        policy.WithOrigins("https://bookapp2026-angular21.netlify.app") 
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
